@@ -7,19 +7,19 @@
             <v-card>
                 <v-card-text>
                     <center>
-                        <v-icon x-large> mdi-clipboard-check</v-icon>
+                        <v-icon x-large> mdi-clipboard-check </v-icon>
                         <p>{{ $t('urlCopied') }}</p>
-                        <v-text-field v-model="url" readonly></v-text-field>
+                        <v-text-field v-model="url" readonly />
                     </center>
                 </v-card-text>
                 <v-card-actions>
-                    <v-spacer></v-spacer>
+                    <v-spacer />
 
                     <v-btn
-                        @click="dialog = false"
                         dark
                         depressed
                         color="#43B581"
+                        @click="dialog = false"
                     >
                         {{ $t('OK') }}
                     </v-btn>
@@ -35,7 +35,7 @@
                             accept="application/json"
                             prepend-icon="mdi-download-outline"
                             @change="importSave"
-                        ></v-file-input>
+                        />
                     </div>
                 </template>
                 <span>{{ $t('History.importGeoSave') }}</span>
@@ -56,19 +56,19 @@
             append-icon="mdi-magnify"
             single-line
             hide-details
-        ></v-text-field>
+        />
         <v-data-table
-            calculate-widths
-            :search="search"
             id="history-table"
-            :headers="headers.filter((h) => !h.hide)"
-            :items="items"
+            calculate-widths
+            item-key="id"
             show-expand
             single-expand
+            :search="search"
+            :headers="headers.filter((h) => !h.hide)"
+            :items="items"
             :sort-by="['dateString']"
             :sort-desc="[true]"
-            item-key="id"
-            :customSort="customSort"
+            :custom-sort="customSort"
             :expanded="items.length > 0 ? [items[items.length - 1]] : []"
         >
             <template v-slot:[`item.actions`]="{ item }">
@@ -78,52 +78,80 @@
             </template>
             <template v-slot:expanded-item="{ headers, item }">
                 <td :colspan="headers.length" class="item">
-                    <HistoryMapCountry
+                    <div v-if="item.multiplayer" class="item_time_multi">
+                        <HistoryTimeDetail
+                            class="item__times"
+                            v-for="(playerName, index) in playersNames(
+                                item.rounds
+                            )"
+                            :rounds="roundsPlayer(item.rounds, playerName)"
+                            :playerName="playerName"
+                            :key="`HistoryTimeDetail` + playerName"
+                            :index="index"
+                        />
+                    </div>
+                    <div v-else>
+                        <HistoryTimeDetail
+                            class="item__times"
+                            :rounds="item.rounds"
+                        />
+                    </div>
+                    <HistoryMapClassic
+                        v-if="item.gameMode === $t('modes.classic')"
                         :item="item"
-                        v-if="item.gameMode === $t('modes.country')"
                     />
-                    <HistoryMapClassic :item="item" v-else />
+                    <HistoryMapArea
+                        v-else
+                        :is-country="item.gameMode === $t('modes.country')"
+                        :item="item"
+                    />
                 </td>
             </template>
         </v-data-table>
-        <v-btn @click="exportCsv" color="primary" class="btn-export">{{
-            $t('History.exportCSV')
-        }}</v-btn>
+        <v-btn color="primary" class="btn-export" @click="exportCsv">
+            {{ $t('History.exportCSV') }}
+        </v-btn>
     </div>
 </template>
 <script>
-import { GAME_MODE } from '../../constants';
+import { mapActions, mapState } from 'vuex';
 import { download } from '../../utils';
 import HistoryMapClassic from './gameResult/HistoryMapClassic';
-import HistoryMapCountry from './gameResult/HistoryMapCountry';
+import HistoryMapArea from './gameResult/HistoryMapArea';
+import HistoryTimeDetail from './gameResult/HistoryTimeDetail';
 export default {
     name: 'HistoryTable',
     components: {
         HistoryMapClassic,
-        HistoryMapCountry,
+        HistoryMapArea,
+        HistoryTimeDetail,
     },
     data() {
         return {
-            history: localStorage.getItem('history')
-                ? JSON.parse(localStorage.getItem('history'))
-                : [],
             expanded: [history[history.length - 1]],
             dialog: false,
             url: '',
             search: '',
-            headers: [
+        };
+    },
+    computed: {
+        ...mapState({
+            history: (state) => state.homeStore.history,
+        }),
+        headers() {
+            return[
                 {
                     text: this.$t('History.date'),
                     value: 'dateString',
                 },
                 {
-                    text: this.$t('History.mode'),
-                    value: 'gameMode',
+                    text: this.$t('History.mapName'),
+                    value: 'mapName',
                     export: true,
                 },
                 {
                     text: this.$t('History.mode'),
-                    value: 'mode',
+                    value: 'gameMode',
                     export: true,
                 },
                 {
@@ -134,6 +162,11 @@ export default {
                 {
                     text: this.$t('History.time'),
                     value: 'timeString',
+                    export: true,
+                },
+                {
+                    text: this.$t('History.nbRound'),
+                    value: 'nbRound',
                     export: true,
                 },
                 {
@@ -164,7 +197,7 @@ export default {
                     hide: true,
                 },
                 {
-                    text: 'Actions',
+                    text: this.$t('History.actions'),
                     value: 'actions',
                     sortable: false,
                 },
@@ -172,10 +205,29 @@ export default {
                     text: '',
                     value: 'data-table-expand',
                 },
-            ],
-        };
+            ];
+        },
+        items() {
+            return this.history.map((g, index) => ({
+                ...g,
+                id: index,
+                score: g.score / 1000,
+                points: g.points,
+                dateString: new Date(g.date).toLocaleString(),
+                mode: g.multiplayer
+                    ? this.$t('DialogRoom.withFriends')
+                    : this.$t('DialogRoom.singlePlayer'),
+                gameMode: this.$t('modes.' + g.mode),
+                timeString:
+                    g.timeLimitation === 0
+                        ? this.$t('CardRoomTime.infinite')
+                        : g.timeLimitation / 60,
+                mapName: g.mapDetails ? g.mapDetails.name : '',
+            }));
+        },
     },
     mounted() {
+        this.loadHistory();
         if ('launchQueue' in window) {
             launchQueue.setConsumer((launchParams) => {
                 if (
@@ -190,29 +242,14 @@ export default {
             });
         }
     },
-    computed: {
-        items() {
-            return this.history.map((g, index) => ({
-                ...g,
-                id: index,
-                score: g.score / 1000,
-                points: g.points,
-                dateString: new Date(g.date).toLocaleString(),
-                mode: g.multiplayer
-                    ? this.$t('DialogRoom.withFriends')
-                    : this.$t('DialogRoom.singlePlayer'),
-                gameMode:
-                    g.mode === GAME_MODE.COUNTRY
-                        ? this.$t('modes.country')
-                        : this.$t('modes.classic'),
-                timeString:
-                    g.timeLimitation === 0
-                        ? this.$t('CardRoomTime.infinite')
-                        : g.timeLimitation / 60,
-            }));
-        },
-    },
     methods: {
+        ...mapActions(['loadHistory']),
+        roundsPlayer(rounds, name) {
+            return rounds.map((r) => r.players[name]);
+        },
+        playersNames(rounds) {
+            return Object.keys(rounds[0].players);
+        },
         customSort(items, index, isDesc) {
             if (index.length === 0) {
                 return items;
@@ -310,38 +347,38 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.v-card,
-.v-data-table {
-    background-color: #f1e9d6 !important;
-}
 #historyTable {
     h2 {
         font-weight: 500;
     }
-    padding: 10px;
+    padding: 0.625rem;
     .item {
         padding: 0;
-        width: 90%;
+        width: 100%;
+        .item_time_multi {
+            max-height: 10.5rem;
+            overflow-x: auto;
+        }
     }
 
     position: relative;
     .history-table__btns {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 0.625rem;
+        right: 0.625rem;
         display: inline-flex;
         .v-input {
-            margin-top: 2px;
+            margin-top: 0.125rem;
             padding-top: 0;
         }
         .v-btn {
-            margin-right: 5px;
+            margin-right: 0.3125rem;
         }
     }
     .btn-export {
         position: absolute;
-        bottom: 20px;
-        left: 10px;
+        bottom: 1.25rem;
+        left: 0.625rem;
     }
 }
 </style>

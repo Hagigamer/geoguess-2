@@ -18,6 +18,7 @@ Vue.use(VueAxios, axios);
 
 Vue.use(CountryNamePlugin);
 Vue.use(VueClipboard);
+
 Vue.use(GmapVue, {
     load: {
         key: process.env.VUE_APP_API_KEY,
@@ -65,10 +66,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-firebase.analytics();
+if (firebaseConfig.measurementId) firebase.analytics();
 
 new Vue({
-    vuetify,
+    vuetify: vuetify(i18n),
     router,
     i18n,
     store,

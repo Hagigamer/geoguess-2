@@ -111,12 +111,95 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Stimmenhotel",
+      "name": "Stimmenhotel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15821524?v=4",
+      "profile": "https://github.com/Stimmenhotel",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "jabbarmusin",
+      "name": "Cabbar Musin",
+      "avatar_url": "https://crowdin-static.downloads.crowdin.com/avatar/14762568/large/a571d24c903f99fb222b289840695534.jpeg",
+      "profile": "https://crowdin.com/profile/jabbarmusin",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "jukefox",
+      "name": "M Treize",
+      "avatar_url": "https://crowdin-static.downloads.crowdin.com/avatar/14626368/large/a84a666b450718b62ed469fd1a225acd.png",
+      "profile": "https://crowdin.com/profile/jukefox",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "ThalisSevero",
+      "name": "ThalisSevero",
+      "avatar_url": "https://www.gravatar.com/avatar/8ef7e5e3502f9816962a7d1536609dd6?s=260&d=https%3A%2F%2Fcrowdin.com%2Fimages%2Fuser-picture.png",
+      "profile": "https://crowdin.com/profile/thalissevero",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "ElectableRuby31",
+      "name": "ElectableRuby31",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81558780?v=4",
+      "profile": "https://github.com/ElectableRuby31",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "Andrea Cortesi",
+      "name": "raccort",
+      "avatar_url": "https://crowdin-static.downloads.crowdin.com/avatar/13144827/large/a3efba5b13184b1e1318c2e06b0d3004.png",
+      "profile": "https://crowdin.com/profile/raccort",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "johnebgood",
+      "name": "johnebgood",
+      "avatar_url": "https://avatars.githubusercontent.com/u/663211?v=4",
+      "profile": "https://securitylive.com",
+      "contributions": [
+        "ideas",
+        "financial"
+      ]
+    },
+    {
+      "login": "jae1911",
+      "name": "Jae Lo Presti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76598503?v=4",
+      "profile": "https://jae.fi",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "EliteAsian123",
+      "name": "EliteAsian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29520859?v=4",
+      "profile": "https://eliteasian123.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
-  "projectName": "Geoguess",
+  "projectName": "GeoGuess",
   "projectOwner": "GeoGuess",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitConvention": "none"
 }

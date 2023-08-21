@@ -1,10 +1,11 @@
-import Home from '@/pages/Home';
-import { GAME_MODE } from './constants';
-import PrivacyPolicy from '@/pages/PrivacyPolicy';
-import StreetView from '@/pages/StreetView';
 import HistoryPage from '@/pages/HistoryPage';
+import Home from '@/pages/Home';
+import MedalsPage from '@/pages/MedalsPage';
 import Vue from 'vue';
 import Router from 'vue-router';
+import { GAME_MODE } from './constants';
+
+const StreetView = () => import('@/pages/StreetView');
 
 const originalPush = Router.prototype.push;
 Router.prototype.push = function push(location) {
@@ -27,6 +28,14 @@ export default new Router({
             component: Home,
         },
         {
+            path: '/custom',
+            name: 'home custom',
+            component: Home,
+            props: () => ({
+                dialogCustomOpen: true,
+            }),
+        },
+        {
             path: '/game/:partyParams',
             name: 'party',
             component: Home,
@@ -42,6 +51,11 @@ export default new Router({
             component: HistoryPage,
         },
         {
+            path: '/medals',
+            name: 'Medals',
+            component: MedalsPage,
+        },
+        {
             path: '/street-view/:modeSelected/:time',
             name: 'street-view',
             component: StreetView,
@@ -49,12 +63,12 @@ export default new Router({
                 multiplayer: false,
                 ...route.params,
                 time: parseInt(route.params.time, 10),
+                nbRoundSelected: route.params.nbRoundSelected ? parseInt(route.params.nbRoundSelected, 10) : 5,
             }),
             beforeEnter: (to, from, next) => {
                 let enterGame = true;
                 if (
-                    to.params.modeSelected !== GAME_MODE.CLASSIC &&
-                    to.params.modeSelected !== GAME_MODE.COUNTRY
+                    !Object.values(GAME_MODE).includes(to.params.modeSelected)
                 ) {
                     enterGame = false;
                 }
@@ -77,12 +91,8 @@ export default new Router({
             props: (route) => ({
                 multiplayer: true,
                 ...route.params,
+                nbRoundSelected: route.params.nbRoundSelected ? parseInt(route.params.nbRoundSelected, 10) : 5,
             }),
-        },
-        {
-            path: '/privacy-policy',
-            name: 'privacy-policy',
-            component: PrivacyPolicy,
         },
     ],
 });

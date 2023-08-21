@@ -7,26 +7,29 @@
     >
         <v-card color="#061422">
             <v-card-text id="card-text">
-                <v-row v-if="!multiplayer" justify="center">
+                <v-row
+                    v-if="!multiplayer"
+                    justify="center"
+                >
                     <p
                         id="summary-text"
                         v-html="
                             $t('DialogSummary.summaryMsgSinglePoints', {
                                 points,
                             }) +
-                            (showDistance
-                                ? $t('DialogSummary.summaryMsgSingleDistance', {
-                                      distance: score / 1000,
-                                  })
-                                : '')
+                                (showDistance
+                                    ? $t('DialogSummary.summaryMsgSingleDistance', {
+                                        distance: score / 1000,
+                                    })
+                                    : '')
                         "
-                    ></p>
+                    />
                 </v-row>
                 <v-row
-                    class="mt-3"
-                    justify="center"
                     v-for="(text, index) in summaryTexts"
                     :key="index"
+                    class="mt-3"
+                    justify="center"
                 >
                     <span id="summary-text">
                         <v-icon
@@ -35,41 +38,44 @@
                                 index == 0
                                     ? '#CCAC00'
                                     : index == 1
-                                    ? '#C0C0C0'
-                                    : '#CC8E34'
+                                        ? '#C0C0C0'
+                                        : '#CC8E34'
                             "
-                            >mdi-crown</v-icon
-                        >
+                        >mdi-crown</v-icon>
                         <span
                             v-html="
                                 $t('DialogSummary.summaryMsgMultiPoints', {
                                     playerName: text.playerName,
                                     points: text.finalPoints,
                                 }) +
-                                (showDistance
-                                    ? $t(
-                                          'DialogSummary.summaryMsgMultiDistance',
-                                          {
-                                              distance: text.finalScore / 1000,
-                                          }
-                                      )
-                                    : '')
+                                    (showDistance
+                                        ? $t(
+                                            'DialogSummary.summaryMsgMultiDistance',
+                                            {
+                                                distance: text.finalScore / 1000,
+                                            }
+                                        )
+                                        : '')
                             "
-                        ></span>
+                        />
                     </span>
                 </v-row>
-                <v-row class="mt-8" justify="center">
+                <v-row
+                    class="mt-8"
+                    justify="center"
+                >
                     <v-btn
                         id="play-again-button"
                         class="mt-8"
                         dark
                         color="#43B581"
                         @click="$emit('finishGame')"
-                        >{{ $t('DialogSummary.viewDetails') }}</v-btn
                     >
+                        {{ $t('DialogSummary.viewDetails') }}
+                    </v-btn>
                     <v-btn
-                        id="exit-button"
                         v-if="!multiplayer"
+                        id="exit-button"
                         class="mt-8"
                         dark
                         color="#f44336"
@@ -95,18 +101,23 @@ export default {
         'multiplayer',
         'game',
         'mode',
+        'mapDetails',
+        'nbRound',
     ],
     computed: {
         showDistance() {
             return this.mode === GAME_MODE.CLASSIC;
         },
     },
+    watch: {
+        dialogSummary: function (newVal) {
+            if (newVal == true) {
+                this.updateRecord();
+            }
+        },
+    },
     methods: {
         updateRecord() {
-            var currentRecord = localStorage.getItem('record');
-            if (currentRecord == null || this.score < currentRecord) {
-                localStorage.setItem('record', this.score);
-            }
             let history = localStorage.getItem('history');
             if (history == null) {
                 history = [];
@@ -122,18 +133,13 @@ export default {
                           (text) => text.playerName === this.playerName
                       ) + 1
                     : undefined,
+                nbRound: this.nbRound,
+                mapDetails: this.mapDetails
             });
             localStorage.setItem('history', JSON.stringify(history));
         },
         finishGame() {
             this.$emit('finishGame');
-        },
-    },
-    watch: {
-        dialogSummary: function (newVal) {
-            if (newVal == true) {
-                this.updateRecord();
-            }
         },
     },
 };

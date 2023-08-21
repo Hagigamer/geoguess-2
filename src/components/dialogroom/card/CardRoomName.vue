@@ -8,50 +8,72 @@
                 <v-row>
                     <v-col cols="12">
                         <v-text-field
+                            :loading="loadRoom"
+                            :disabled="loadRoom"
+                            :type="streamerMode ? 'password' : 'text'"
                             id="inputRoomName"
+                            v-model="roomInputValue"
                             maxlength="10"
                             autofocus
-                            :error-messages="errorMessage"
-                            v-model="roomName"
-                            v-on:keyup.enter="searchRoom"
-                        ></v-text-field>
+                            :error-messages="roomErrorMessage"
+                            @keyup.enter="searchRoom"
+                        />
                     </v-col>
                 </v-row>
             </v-container>
         </v-card-text>
         <v-card-actions>
-            <div class="flex-grow-1"></div>
-            <v-btn dark depressed color="#FF5252" @click="cancel">{{
-                $t('cancel')
-            }}</v-btn>
-            <v-btn dark depressed color="#43B581" @click="searchRoom">{{
-                $t('next')
-            }}</v-btn>
+            <div class="flex-grow-1" />
+            <v-btn dark depressed color="error" @click="cancel">
+                {{ $t('cancel') }}
+            </v-btn>
+            <v-btn
+                dark
+                depressed
+                color="#43B581"
+                @click="searchRoom(roomNameText)"
+            >
+                {{ $t('next') }}
+            </v-btn>
         </v-card-actions>
     </v-card>
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex';
+import CardRoomMixin from './mixins/CardRoomMixin';
 export default {
-    props: ['errorMessage'],
+    mixins: [CardRoomMixin],
     data() {
         return {
-            roomName: '',
+            roomNameText: '',
         };
     },
+    computed: {
+        ...mapState({
+            streamerMode: (state) => state.homeStore.streamerMode,
+        }),
+        ...mapState('settingsStore', [
+            'roomErrorMessage',
+            'loadRoom',
+            'roomName',
+        ]),
+        roomInputValue: {
+            get: function () {
+                return this.loadRoom ? this.roomName : this.roomNameText;
+            },
+            set: function (newValue) {
+                this.roomNameText = newValue;
+            },
+        },
+    },
     methods: {
-        searchRoom() {
-            // Pass room name to parent component
-            this.$emit('searchRoom', this.roomName);
-        },
-        cancel() {
-            this.$emit('cancel');
-        },
+        ...mapActions('settingsStore', ['searchRoom']),
     },
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 #card-title {
     font-size: 16px;
     font-weight: 500;

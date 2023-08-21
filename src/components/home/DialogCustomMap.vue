@@ -1,9 +1,9 @@
 <template>
     <v-dialog
         :value="this.visibility"
-        @input="$emit('change-visibility')"
         scrollable
         :fullscreen="$viewport.width < 450"
+        @input="$emit('change-visibility')"
     >
         <v-card class="dialog-customs">
             <v-btn class="close-btn" icon @click="$emit('change-visibility')">
@@ -14,38 +14,63 @@
             </v-card-title>
             <v-card-text>
                 <v-row no-gutters class="dialog-customs__row">
-                    <v-col md="5" sm="12" class="mr-6">
+                    <v-col md="6" sm="12" class="mr-6">
+                        <v-row class="mt-2 mr-3 ml-1 mb-5" align="stretch">
+                            <v-text-field
+                                :placeholder="
+                                    $t('DialogCustomMap.inputName.placeholder')
+                                "
+                                :label="$t('DialogCustomMap.inputName.label')"
+                                :value="mapName"
+                                @input="setMapName"
+                                filled
+                                :loading="loadingSave"
+                                hide-details
+                            />
+
+                            <SaveButton
+                                class="ml-2 mt-2 "
+                                color="dark"
+                                :dark="!isSaveAllowed"
+                                @click="saveMap"
+                                :disabled="isSaveAllowed"
+                                :loading="loadingSave"
+                            >
+                                <v-icon left dark> mdi-content-save </v-icon>
+                                {{ $t('DialogCustomMap.save') }}
+                            </SaveButton>
+                        </v-row>
                         <v-skeleton-loader
                             v-if="loading"
                             class="mx-auto"
-                            height="500"
+                            height="550"
                             type="image"
-                        ></v-skeleton-loader>
+                        />
                         <div v-else>
                             <v-alert
-                                type="error"
                                 v-if="isValidGeoJson === false"
+                                type="error"
                                 transition="out-in"
                             >
                                 {{ $t('DialogCustomMap.invalid') }}
                             </v-alert>
 
                             <GmapMap
+                                ref="mapRef"
                                 :center="{ lat: 10, lng: 10 }"
                                 :zoom="1"
-                                ref="mapRef"
                                 map-type-id="roadmap"
-                                style="width: 100%; height: 500px"
+                                style="width: 100%; height: 530px"
                                 :options="{
                                     gestureHandling: 'greedy',
                                 }"
-                            >
-                            </GmapMap>
+                            />
                             <v-row>
                                 <v-btn
                                     class="mt-6 mr-auto ml-auto"
-                                    @click="saveGeoJson"
                                     color="secondary"
+                                    small
+                                    @click="downloadGeoJson"
                                 >
                                     <v-icon left dark>
                                         mdi-cloud-download
@@ -61,53 +86,54 @@
                             <v-radio
                                 :label="$t('DialogCustomMap.text')"
                                 value="text"
-                            ></v-radio>
+                            />
                             <v-radio
                                 :label="$t('DialogCustomMap.url')"
                                 value="url"
-                            ></v-radio>
+                            />
                             <v-radio
                                 :label="$t('DialogCustomMap.file')"
                                 value="file"
-                            ></v-radio>
+                            />
                             <v-radio
                                 :label="$t('DialogCustomMap.edit')"
                                 value="edit"
-                            ></v-radio>
+                            />
                         </v-radio-group>
                         <v-file-input
                             v-if="type === 'file'"
-                            :label="$t('DialogCustomMap.fileLabel')"
                             v-model="file"
+                            :label="$t('DialogCustomMap.fileLabel')"
                             prepend-icon="mdi-map"
-                        ></v-file-input>
+                        />
                         <v-text-field
                             v-else-if="type === 'url'"
+                            v-model="url"
                             placeholder="https://gist.github.com/..."
                             label="Url"
                             type="text"
-                            v-model="url"
                             :rules="rulesUrl"
                         />
+
                         <v-textarea
                             v-else
                             :error="isValidGeoJson !== null && !isValidGeoJson"
                             :success="isValidGeoJson"
                             :value="geoJsonString"
-                            v-on:input="onChangeTextArea"
                             :placeholder="placeholderGeoJson"
                             :rules="rulesTextArea"
                             rows="21"
                             filled
                             clearable
                             :loading="loading"
-                        >
-                        </v-textarea>
+                            @input="onChangeTextArea"
+                        />
                     </v-col>
                 </v-row>
             </v-card-text>
             <v-card-actions>
-                <div class="flex-grow-1"></div>
+                <div class="flex-grow-1" />
+                <v-btn @click="clean" color="error"> {{ $t('DialogCustomMap.Clean') }} </v-btn>
                 <v-btn dark color="primary" @click="$emit('change-visibility')">
                     {{ $t('DialogCustomMap.OK') }}
                 </v-btn>
@@ -117,13 +143,21 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions, mapGetters, mapMutations, mapState } from 'vuex';
 import { validURL } from '@/utils';
 import { download, isGeoJSONValid } from '../../utils';
+import { HOME_SET_NAME_GEOJSON } from '../../store/mutation-types';
+import { GeoMapCustom } from '../../models/GeoMap';
+import SaveButton from '@/components/shared/SaveButton';
 
 export default {
     name: 'DialogCustomMap',
-    props: ['visibility'],
+    components: {
+        SaveButton,
+    },
+    props: {
+        visibility: Boolean,
+    },
     data() {
         return {
             rulesUrl: [(value) => validURL(value)],
@@ -134,16 +168,37 @@ export default {
             initMap: false,
             editMap: false,
             loading: false,
+            loadingSave: false,
         };
     },
     computed: {
         ...mapGetters(['geoJsonString', 'isValidGeoJson', 'geoJson']),
+        ...mapState({
+            mapName: (state) => state.homeStore.map.name,
+        }),
         placeholderGeoJson() {
             return this.loading ? '' : geoJsonExample;
         },
+        isSaveAllowed() {
+            return (
+                this.mapName === '' ||
+                !this.geoJson ||
+                this.isValidGeoJson === false
+            );
+        },
     },
     methods: {
-        ...mapActions(['loadGeoJsonFromUrl', 'setGeoJson', 'setGeoJsonString']),
+        ...mapActions([
+            'loadGeoJsonFromUrl',
+            'setGeoJson',
+            'setGeoJsonString',
+            'saveGeoJson',
+            'setMapLoaded',
+            'getListMapsCustoms',
+        ]),
+        ...mapMutations({
+            setMapName: HOME_SET_NAME_GEOJSON,
+        }),
         checkIfStringGeoJsonValid(string) {
             try {
                 return isGeoJSONValid(JSON.parse(string));
@@ -151,7 +206,6 @@ export default {
                 return false;
             }
         },
-
         onChangeTextArea(e) {
             this.setGeoJsonString(e);
         },
@@ -162,55 +216,22 @@ export default {
                 map.data.toGeoJson((geoJson) => this.setGeoJson(geoJson));
             });
         },
-        saveGeoJson() {
+        downloadGeoJson() {
             download(
                 this.geoJsonString,
                 'geoguessMap_' + new Date().toISOString() + '.geojson',
                 'application/vnd.geo+json'
             );
         },
-    },
-    async mounted() {
-        await this.$gmapApiPromiseLazy();
-        if ('launchQueue' in window) {
-            launchQueue.setConsumer((launchParams) => {
-                if (
-                    !Array.isArray(launchParams.files) ||
-                    launchParams.files.length !== 1
-                ) {
-                    return;
-                }
-                launchParams.files[0].getFile().then((f) => {
-                    this.loading = true;
-                    this.$emit('change-visibility');
-                    f.text()
-                        .then((content) => {
-                            return this.setGeoJsonString(content);
-                        })
-                        .then(() => {
-                            this.loading = false;
-                        });
-                });
-            });
-        }
-    },
-    updated() {
-        if (!this.initMap) {
-            this.$nextTick(() => {
-                if (this.$refs.mapRef)
-                    this.$refs.mapRef.$mapPromise.then((map) => {
-                        const streetViewLayer = new google.maps.StreetViewCoverageLayer();
-                        streetViewLayer.setMap(map);
-                        let data = new google.maps.Data({
-                            map: map,
-                        });
-                        if (this.geoJson) data.addGeoJson(this.geoJson);
-                        map.data.setMap(null);
-                        map.data = data;
-                        this.initMap = true;
-                    });
-            });
-        }
+        async saveMap() {
+            this.loadingSave = true;
+            await this.saveGeoJson();
+            this.loadingSave = false;
+        },
+        clean() {
+            this.setMapLoaded(new GeoMapCustom());
+            this.url = '';
+        },
     },
     watch: {
         geoJson(v) {
@@ -224,11 +245,7 @@ export default {
                         style: map.data.getStyle(),
                         controls: map.data.getControls(),
                     });
-                    try {
-                        data.addGeoJson(v);
-                    } catch (e) {
-                        throw e;
-                    }
+                    data.addGeoJson(v);
 
                     if (this.type === 'edit') {
                         data.addListener('addfeature', this.onChangeMap);
@@ -260,28 +277,57 @@ export default {
                         editable: true,
                         draggable: true,
                     });
-                    map.data.addListener('addfeature', this.onChangeMap);
-                    map.data.addListener('removefeature', this.onChangeMap);
-                    map.data.addListener('setgeometry', this.onChangeMap);
                 } else {
                     map.data.setControls(null);
                     map.data.setStyle({});
-
-                    map.data.removeEventListener(
-                        'addfeature',
-                        this.onChangeMap
-                    );
-                    map.data.removeEventListener(
-                        'removefeature',
-                        this.onChangeMap
-                    );
-                    map.data.removeEventListener(
-                        'setgeometry',
-                        this.onChangeMap
-                    );
                 }
             });
         },
+    },
+    async mounted() {
+        await this.$gmapApiPromiseLazy();
+        if ('launchQueue' in window) {
+            launchQueue.setConsumer((launchParams) => {
+                if (
+                    !Array.isArray(launchParams.files) ||
+                    launchParams.files.length !== 1
+                ) {
+                    return;
+                }
+                launchParams.files[0].getFile().then((f) => {
+                    this.loading = true;
+                    f.text()
+                        .then((content) => {
+                            return this.setGeoJsonString(content);
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                });
+            });
+        }
+    },
+    updated() {
+        if (!this.initMap) {
+            this.$nextTick(() => {
+                if (this.$refs.mapRef)
+                    this.$refs.mapRef.$mapPromise.then((map) => {
+                        const streetViewLayer = new google.maps.StreetViewCoverageLayer();
+                        streetViewLayer.setMap(map);
+                        let data = new google.maps.Data({
+                            map: map,
+                        });
+                        if (this.geoJson) data.addGeoJson(this.geoJson);
+                        map.data.setMap(null);
+                        map.data = data;
+
+                        map.data.addListener('addfeature', this.onChangeMap);
+                        map.data.addListener('removefeature', this.onChangeMap);
+                        map.data.addListener('setgeometry', this.onChangeMap);
+                        this.initMap = true;
+                    });
+            });
+        }
     },
 };
 

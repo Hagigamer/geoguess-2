@@ -3,13 +3,16 @@ module.exports = {
     collectCoverage: true,
     collectCoverageFrom: [
         'src/**/*.{js,vue}',
-        'src/utils.js',
+        'src/utils/*',
         '!**/node_modules/**',
-        '!src/plugins/*',
+        '!src/plugins/vuetify.js',
         '!src/lang/*',
-        '!src/*.js',
+        '!src/router.js',
+        '!src/store/index.js',
+        '!src/main.js',
+        '!src/registerServiceWorker.js',
     ],
     transformIgnorePatterns: [
-        'node_modules/(?!gmap-vue|axios-cache-adapter|cache-control-esm)',
+        'node_modules/(?!gmap-vue|axios-cache-adapter|cache-control-esm|vuetify)',
     ],
 };

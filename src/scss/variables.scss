@@ -45,3 +45,16 @@ html, body {
   top: 1rem;
   color: black;
 }
+
+.v-btn--text {
+  margin: 0 8px;
+}
+
+.blur{
+  filter: blur(4px);
+}
+
+.v-card,
+.v-data-table {
+    background-color: #f1e9d6 !important;
+}

@@ -4,33 +4,39 @@
             <v-slider
                 :value="value"
                 class="align-center"
-                v-on:change="changeAll"
                 max="600"
                 min="0"
                 step="30"
+                ticks
                 hide-details
-            >
-            </v-slider>
+                @change="changeAll"
+            />
         </v-row>
         <v-row>
-            <div class="time-input" v-if="this.value > 0">
+            <div
+                v-if="this.value > 0"
+                class="time-input"
+            >
                 <v-text-field
                     :value="Math.floor(this.value / 60)"
-                    v-on:change="changeMinute"
                     reverse
                     type="number"
                     class="time-input__minute"
-                ></v-text-field>
+                    @change="changeMinute"
+                />
                 <p>:</p>
-
+                
                 <v-text-field
-                    :value="this.value % 60"
-                    v-on:change="changeSecond"
+                    :value="secondsValue"
                     type="number"
                     class="time-input__second"
-                ></v-text-field>
+                    @change="changeSecond"
+                />
             </div>
-            <p v-else class="infinite--text">
+            <p
+                v-else
+                class="infinite--text"
+            >
                 {{ $t('CardRoomTime.infinite') }}
             </p>
         </v-row>
@@ -52,6 +58,19 @@ export default {
         changeSecond(s) {
             // Tape in input second
             this.$emit('input', Math.floor(this.value / 60) * 60 + parseInt(s)); // Get number minutes and add seconds
+        },
+    },
+    computed: {
+        secondsValue() {
+            // Get the value in seconds
+            let out = (this.value % 60).toString();
+
+            // Pad seconds with 0 if the number is one digit
+            if (out.length < 2) {
+                out = '0' + out;
+            }
+
+            return out;
         },
     },
 };

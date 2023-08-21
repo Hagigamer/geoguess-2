@@ -1,43 +1,35 @@
 <template>
     <div id="map">
         <GmapMap
+            id="mapClassic"
+            ref="mapRef"
             :center="{ lat: 37.86926, lng: -122.254811 }"
             :zoom="1"
-            ref="mapRef"
-            id="mapClassic"
             map-type-id="roadmap"
             :options="{
                 fullscreenControl: false,
                 mapTypeControl: false,
                 streetViewControl: false,
+                draggableCursor: 'crosshair',
+                clickableIcons: false
             }"
-        >
-        </GmapMap>
+        />
     </div>
 </template>
 <script>
+import { STROKE_COLORS } from '../../constants';
+import MapMixin from './mixins/MapMixin';
 export default {
     name: 'Map',
-    props: ['bbox'],
+    mixins: [MapMixin],
     data() {
         return {
             map: null,
             marker: [],
             markers: [],
             polylines: [],
-            strokeColors: [
-                '#F44336',
-                '#76FF03',
-                '#FFEB3B',
-                '#FF4081',
-                '#18FFFF',
-            ],
+            strokeColors: STROKE_COLORS,
         };
-    },
-    watch: {
-        bbox() {
-            this.centerOnBbox();
-        },
     },
     async mounted() {
         await this.$gmapApiPromiseLazy();
@@ -48,22 +40,14 @@ export default {
         });
     },
     methods: {
-        centerOnBbox() {
-            if (this.map && this.bbox) {
-                this.map.fitBounds({
-                    east: this.bbox[2],
-                    north: this.bbox[3],
-                    south: this.bbox[1],
-                    west: this.bbox[0],
-                });
-            }
-        },
         putMarker(position, isRandomLocation, label) {
             let info = {};
             if (isRandomLocation) {
                 info = {
-                    icon:
-                        window.location.origin + '/img/icons/favicon-16x16.png',
+                    icon: {
+                        url: window.location.origin + '/img/icons/favicon-16x16.png',
+                        anchor: new google.maps.Point(8,8),
+                    }
                 };
             }
             if (label) {
@@ -94,15 +78,13 @@ export default {
                     '<b>' +
                     this.$t('Maps.infoWindow.Distance') +
                     ' : </b>' +
-                    distance +
-                    ' m';
+                    new Intl.NumberFormat(this.$i18n.locale, { style: "unit", unit:"meter" }).format(distance); 
             } else {
                 dataToDisplay +=
                     '<b>' +
                     this.$t('Maps.infoWindow.Distance') +
                     ' : </b>' +
-                    distance / 1000 +
-                    ' km';
+                    new Intl.NumberFormat(this.$i18n.locale, { style: "unit", unit:"kilometer" }).format(distance / 1000); 
             }
 
             dataToDisplay +=
@@ -122,9 +104,22 @@ export default {
             );
         },
         drawPolyline(selectedLatLng, i = 0, randomLatLng) {
+            const lineSymbol = {
+                path: "M 0,-1 0,1",
+                strokeOpacity: 1,
+                scale: 2,
+            };
             const polyline = new google.maps.Polyline({
                 path: [selectedLatLng, randomLatLng],
+                strokeOpacity: 0,
                 strokeColor: this.strokeColors[i % this.strokeColors.length],
+                icons: [
+                    {
+                        icon: lineSymbol,
+                        offset: "0",
+                        repeat: "10px",
+                    },
+                ],
             });
             polyline.setMap(this.map);
             this.polylines.push(polyline);
@@ -146,6 +141,7 @@ export default {
                     // Save latLng
                     this.$emit('setSeletedPos', e.latLng);
                 });
+                this.centerOnBbox();
             });
         },
         removeListener() {

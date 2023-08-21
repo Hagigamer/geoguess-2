@@ -13,5 +13,7 @@
   VUE_APP_FIREBASE_APP_ID = "YOUR_FIREBASE_APP_ID"
   VUE_APP_FIREBASE_MEASUREMENT_ID = "YOUR_FIREBASE_MEASUREMENT_ID"
 
-[[plugins]]
-  package = "@netlify/plugin-functions-install-core"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
